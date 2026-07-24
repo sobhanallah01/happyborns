@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happyborns — Find Your Birthday Twin</title>
+<meta name="description" content="Someone was born on the exact same day as you, somewhere in the world. Find them. Happyborns connects people who share a birthday.">
+<meta property="og:title" content="Happyborns — Find Your Birthday Twin">
+<meta property="og:description" content="Someone was born on the exact same day as you, somewhere in the world. Find them.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://happyborns.netlify.app/">
+<meta property="og:image" content="https://happyborns.netlify.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Happyborns — Find Your Birthday Twin">
+<meta name="twitter:description" content="Someone was born on the exact same day as you, somewhere in the world. Find them.">
+<meta name="twitter:image" content="https://happyborns.netlify.app/og-image.png">
+<meta name="theme-color" content="#1A2540">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='46' fill='%231A2540'/%3E%3Ccircle cx='50' cy='52' r='30' fill='%232C6890'/%3E%3Cpath d='M30 48 q10 -8 20 0 t20 0' stroke='%232A6B5E' stroke-width='7' fill='none' opacity='0.85'/%3E%3Ccircle cx='50' cy='52' r='30' fill='none' stroke='%23C4903F' stroke-width='2.5'/%3E%3Ccircle cx='72' cy='30' r='6' fill='%23F4C77E'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="countries-data.js"></script>
+<script src="country-coords.js"></script>
+<script src="i18n.js"></script>
+<style>
+:root {
+  --bg: #F7F3EE;
+  --bg-soft: #EDE8E0;
+  --ink: #1A2540;
+  --gold: #C4903F;
+  --terra: #B05040;
+  --line: #DDD5C8;
+  --paper: #FDFAF6;
+  --green: #2A6B5E;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+body::before {
+  content: "";
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(196,144,63,0.07), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(26,37,64,0.05), transparent 45%);
+  pointer-events: none; z-index: 0;
+}
+.wrap { max-width: 880px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+/* ===== NAV ===== */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100; padding: 18px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(247,243,238,0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(221,213,200,0.5);
+}
+.nav-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; color: var(--ink); text-decoration: none;
+  letter-spacing: -0.3px;
+}
+.nav-logo span { color: var(--terra); }
+.nav-cta {
+  background: var(--ink); color: var(--paper);
+  font-size: 13px; font-weight: 600;
+  padding: 9px 20px; border-radius: 6px;
+  text-decoration: none; letter-spacing: 0.2px;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.lang-wrap {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.6);
+  border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 8px 5px 10px;
+  cursor: pointer;
+}
+.lang-globe { font-size: 14px; line-height: 1; }
+#lang-switch {
+  border: none; background: transparent;
+  font-family: 'Inter', sans-serif; font-size: 13px;
+  font-weight: 600; color: var(--ink);
+  cursor: pointer; outline: none;
+  max-width: 128px;
+}
+@media (max-width: 520px) {
+  nav { padding: 12px 16px; }
+  .nav-cta { display: none; }
+  #lang-switch { max-width: 108px; }
+}
+/* RTL support */
+html[dir="rtl"] body { text-align: right; }
+html[dir="rtl"] .hero,
+html[dir="rtl"] .section,
+html[dir="rtl"] .manifesto-inner,
+html[dir="rtl"] .form-section .wrap { text-align: center; }
+/* form: labels, inputs and hints align right */
+html[dir="rtl"] .field { text-align: right; }
+html[dir="rtl"] .field label,
+html[dir="rtl"] .field-hint,
+html[dir="rtl"] .field input,
+html[dir="rtl"] .field select { text-align: right; }
+html[dir="rtl"] .field input,
+html[dir="rtl"] .field select { direction: rtl; }
+/* contact value (phone/email) stays LTR so codes read correctly */
+html[dir="rtl"] #inp-contact-val { direction: ltr; text-align: right; }
+/* dropdown arrow moves to the left side */
+html[dir="rtl"] .field select {
+  background-position: left 12px center;
+  padding-right: 14px; padding-left: 34px;
+}
+/* why-cards: icon on the right of the text */
+html[dir="rtl"] .why-card { flex-direction: row-reverse; }
+html[dir="rtl"] .why-card > div { text-align: right; }
+/* honest list bullets on the right */
+html[dir="rtl"] .honest-box ul { text-align: right; padding-left: 0; padding-right: 18px; }
+/* form footer + success text */
+html[dir="rtl"] .form-foot,
+html[dir="rtl"] .success-msg { text-align: center; }
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center; padding: 100px 24px 60px;
+}
+.ring-wrap {
+  position: relative; width: 300px; height: 300px;
+  margin-bottom: 46px;
+  opacity: 0; transform: scale(0.92);
+  animation: ringIn 1.2s cubic-bezier(0.22,1,0.36,1) 0.1s forwards;
+}
+@keyframes ringIn { to { opacity: 1; transform: scale(1); } }
+.ring-svg { width: 100%; height: 100%; overflow: visible; }
+
+/* ===== Rotating Earth globe (shared: hero + form) ===== */
+.globe-glow {
+  fill: url(#glowGrad);
+  transform-box: fill-box; transform-origin: center;
+  animation: globeBreath 5s ease-in-out infinite;
+}
+@keyframes globeBreath {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+.globe-ocean { fill: url(#oceanGrad); }
+.globe-shade { fill: url(#shadeGrad); }
+.globe-atmo  { fill: none; stroke: #8FC4E6; stroke-width: 3; opacity: 0.16; }
+.globe-rim   { fill: none; stroke: var(--gold); stroke-width: 1; opacity: 0.45; }
+
+/* horizontal scroll of the map = planet rotation */
+.earth-rot { animation: earthSpin 34s linear infinite; }
+@keyframes earthSpin { from { transform: translateX(0); } to { transform: translateX(-440px); } }
+
+/* people around the world — pulsing multicolored lights */
+.ppl { transform-box: fill-box; transform-origin: center; animation: pplPulse 3.2s ease-in-out infinite; }
+@keyframes pplPulse {
+  0%, 100% { transform: scale(0.5); opacity: 0.4; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.p-a { fill: #F4C77E; filter: drop-shadow(0 0 3px rgba(244,199,126,0.95)); }
+.p-b { fill: #E07A5F; filter: drop-shadow(0 0 3px rgba(224,122,95,0.95)); }
+.p-c { fill: #EBB98A; filter: drop-shadow(0 0 3px rgba(235,185,138,0.95)); }
+.p-d { fill: #B57C57; filter: drop-shadow(0 0 3px rgba(181,124,87,0.95)); }
+.p-e { fill: #F6E7CB; filter: drop-shadow(0 0 3px rgba(246,231,203,0.95)); }
+.p-f { fill: #8FD3C7; filter: drop-shadow(0 0 3px rgba(143,211,199,0.95)); }
+.p-g { fill: #9FB8E8; filter: drop-shadow(0 0 3px rgba(159,184,232,0.95)); }
+
+.orbit-ring {
+  fill: none; stroke: var(--gold); stroke-width: 0.6;
+  stroke-dasharray: 2 10; opacity: 0.3;
+  transform-box: fill-box; transform-origin: center;
+  animation: spinSlow 26s linear infinite;
+}
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+
+.ring-center {
+  position: absolute; left: 0; right: 0; bottom: -6px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.ring-label {
+  font-family: 'DM Serif Display', serif;
+  font-size: 14px; color: var(--ink); opacity: 0.75;
+  letter-spacing: 0.3px; font-style: italic;
+  background: var(--bg); padding: 0 10px;
+}
+.ring-sub {
+  font-size: 10px; color: var(--terra);
+  margin-top: 4px; opacity: 0;
+  letter-spacing: 1.8px; text-transform: uppercase; font-weight: 600;
+  animation: fadeUp 0.9s ease 2s forwards;
+}
+@keyframes fadeUp { to { opacity: 0.8; } }
+@media (prefers-reduced-motion: reduce) {
+  .globe-glow, .earth-rot, .ppl, .orbit-ring { animation: none; }
+}
+
+.tag {
+  display: inline-block;
+  background: rgba(176,80,64,0.1);
+  color: var(--terra); border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  padding: 5px 14px; letter-spacing: 0.5px;
+  margin-bottom: 24px; text-transform: uppercase;
+}
+h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(36px, 6vw, 62px);
+  line-height: 1.15; max-width: 720px;
+  margin-bottom: 22px; letter-spacing: -1px;
+}
+h1 em { font-style: italic; color: var(--terra); }
+.lede {
+  font-size: clamp(16px, 2vw, 18px);
+  opacity: 0.7; max-width: 500px;
+  margin-bottom: 22px; font-weight: 400;
+}
+.hero-mission {
+  font-size: clamp(15px, 1.9vw, 17px);
+  max-width: 540px; margin: 0 auto 34px;
+  line-height: 1.6; font-weight: 500;
+  color: var(--ink); opacity: 0.92;
+}
+.hero-mission em {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic; color: var(--terra);
+}
+.hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.btn-primary {
+  background: var(--ink); color: var(--paper);
+  font-weight: 700; font-size: 16px;
+  padding: 16px 36px; border-radius: 6px;
+  text-decoration: none;
+  box-shadow: 0 5px 0 var(--gold);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-block;
+}
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 0 var(--gold); }
+.btn-ghost {
+  background: transparent; color: var(--ink);
+  font-weight: 500; font-size: 15px;
+  padding: 16px 28px; border-radius: 6px;
+  text-decoration: none; border: 1.5px solid var(--line);
+  transition: border-color 0.2s;
+  display: inline-block;
+}
+.btn-ghost:hover { border-color: var(--ink); }
+.hero-note { margin-top: 18px; font-size: 12px; opacity: 0.42; }
+.hero-live {
+  margin: 0 auto 26px; font-size: 16px; font-weight: 700;
+  color: var(--green); letter-spacing: 0.2px;
+  display: inline-flex; align-items: center; gap: 10px;
+  background: rgba(42,107,94,0.10);
+  border: 1.5px solid rgba(42,107,94,0.34);
+  padding: 11px 22px; border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(42,107,94,0.14);
+  animation: liveBreath 2.6s ease-in-out infinite;
+}
+.hero-live b { font-weight: 800; }
+.hero-live::before {
+  content: ""; width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0;
+  background: var(--green); box-shadow: 0 0 0 0 rgba(42,107,94,0.55);
+  animation: livePulse 1.8s infinite;
+}
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(42,107,94,0.55); }
+  70%  { box-shadow: 0 0 0 10px rgba(42,107,94,0); }
+  100% { box-shadow: 0 0 0 0 rgba(42,107,94,0); }
+}
+@keyframes liveBreath {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.035); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-live { animation: none; }
+}
+
+/* ===== LIVE MAP DOTS (on form globe) ===== */
+.live-dots .ld {
+  fill: #F4C77E; opacity: 0.9;
+  animation: ldPulse 2.4s ease-in-out infinite;
+}
+@keyframes ldPulse {
+  0%,100% { opacity: 0.45; }
+  50%     { opacity: 1; }
+}
+.live-dots .ld-mine {
+  fill: #E0563F;
+  animation: ldMine 1.1s ease-in-out infinite;
+}
+@keyframes ldMine {
+  0%,100% { opacity: 1; transform: none; }
+  50%     { opacity: 0.65; }
+}
+
+/* ===== ROOM PREVIEW (in form) ===== */
+.room-preview {
+  margin: -6px 0 22px; padding: 16px 18px;
+  border-radius: 12px; text-align: center;
+  background: rgba(196,144,63,0.10);
+  border: 1px solid rgba(196,144,63,0.32);
+  color: var(--ink);
+  animation: roomPop 0.45s cubic-bezier(0.22,1,0.36,1);
+}
+.room-preview.warm {
+  background: rgba(42,107,94,0.10);
+  border-color: rgba(42,107,94,0.34);
+}
+.room-preview .rp-big {
+  font-family: 'DM Serif Display', serif;
+  font-size: 19px; line-height: 1.25; margin-bottom: 4px;
+}
+.room-preview .rp-big b { color: var(--terra); }
+.room-preview.warm .rp-big b { color: var(--green); }
+.room-preview .rp-sub { font-size: 13px; opacity: 0.7; }
+.rp-chips {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 6px; margin: 10px 0 8px;
+}
+.rp-chip {
+  font-size: 12.5px; font-weight: 600;
+  padding: 5px 11px; border-radius: 999px;
+  background: rgba(42,107,94,0.12);
+  border: 1px solid rgba(42,107,94,0.26);
+  color: var(--ink); white-space: nowrap;
+}
+.rp-chip.rp-more { opacity: 0.7; font-weight: 700; }
+@keyframes roomPop {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.success-room {
+  font-weight: 600; color: var(--green);
+  margin-bottom: 8px !important;
+}
+
+/* ===== STATS STRIP ===== */
+.stats {
+  background: var(--ink); color: var(--paper);
+  padding: 28px 24px;
+}
+.stats-inner {
+  max-width: 880px; margin: 0 auto;
+  display: flex; gap: 0;
+  justify-content: space-around; flex-wrap: wrap;
+}
+.stat { text-align: center; padding: 10px 20px; }
+.stat-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px; color: var(--gold);
+  display: block; line-height: 1;
+}
+.stat-label { font-size: 12px; opacity: 0.55; margin-top: 4px; }
+
+/* ===== HOW IT WORKS ===== */
+.section { padding: 88px 24px; }
+.section-tag {
+  display: block; text-align: center;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--terra); margin-bottom: 14px;
+  opacity: 0.8;
+}
+.section-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(26px, 4vw, 38px);
+  text-align: center; margin-bottom: 14px;
+  letter-spacing: -0.5px;
+}
+.section-sub {
+  text-align: center; opacity: 0.62;
+  max-width: 480px; margin: 0 auto 56px;
+  font-size: 16px;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+@media (max-width: 700px) { .steps { grid-template-columns: 1fr; gap: 24px; } }
+.step-card {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 10px; padding: 32px 24px;
+  position: relative;
+}
+.step-num {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg-soft); display: flex;
+  align-items: center; justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px; color: var(--terra);
+  margin-bottom: 18px;
+}
+.step-card h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px; margin-bottom: 10px;
+}
+.step-card p { font-size: 14px; opacity: 0.68; line-height: 1.6; }
+
+/* ===== WHY ===== */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+@media (max-width: 640px) { .why-grid { grid-template-columns: 1fr; } }
+.why-card {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 10px; padding: 28px 24px;
+  display: flex; gap: 16px; align-items: flex-start;
+}
+.why-icon {
+  font-size: 26px; flex-shrink: 0;
+  width: 44px; height: 44px;
+  background: var(--bg-soft); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.why-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+.why-card p { font-size: 13.5px; opacity: 0.65; line-height: 1.55; }
+
+/* ===== HONEST BOX ===== */
+.honest-box {
+  background: var(--bg-soft); border-radius: 10px;
+  padding: 44px 40px; max-width: 700px; margin: 0 auto;
+  border: 1px solid var(--line);
+}
+@media (max-width: 560px) { .honest-box { padding: 28px 20px; } }
+.honest-box h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px; margin-bottom: 16px; color: var(--terra);
+}
+.honest-box p { font-size: 15px; opacity: 0.8; margin-bottom: 12px; }
+.honest-box ul { padding-left: 18px; margin: 14px 0; }
+.honest-box li { font-size: 14.5px; opacity: 0.78; margin-bottom: 7px; }
+
+/* ===== MANIFESTO ===== */
+.manifesto {
+  position: relative;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 104px 24px;
+  overflow: hidden;
+}
+.manifesto::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(196,144,63,0.18), transparent 42%),
+    radial-gradient(circle at 82% 78%, rgba(42,107,94,0.20), transparent 46%);
+  pointer-events: none;
+}
+.manifesto-inner {
+  position: relative; z-index: 1;
+  max-width: 760px; margin: 0 auto; text-align: center;
+}
+.manifesto .eyebrow {
+  display: inline-block;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 24px;
+}
+.manifesto h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(30px, 5.6vw, 52px);
+  line-height: 1.12; font-weight: 400;
+  margin-bottom: 30px;
+}
+.manifesto h2 em { color: var(--gold); font-style: italic; }
+.manifesto-lead {
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.7; opacity: 0.9;
+  max-width: 620px; margin: 0 auto 22px;
+}
+.manifesto-body {
+  font-size: 15.5px; line-height: 1.78;
+  opacity: 0.74; max-width: 600px; margin: 0 auto 20px;
+}
+.manifesto-body strong { color: var(--paper); opacity: 1; font-weight: 600; }
+.manifesto-rooms {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 12px; margin: 34px auto 6px; max-width: 600px;
+}
+.manifesto-rooms span {
+  font-size: 13.5px; font-weight: 500;
+  padding: 9px 16px; border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.86);
+}
+.manifesto-close {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(20px, 3.4vw, 28px);
+  line-height: 1.3; color: var(--gold);
+  margin-top: 44px;
+}
+@media (max-width: 560px) { .manifesto { padding: 72px 20px; } }
+
+/* ===== FORM ===== */
+.form-section {
+  background: var(--ink); color: var(--paper);
+  padding: 96px 24px;
+}
+.form-section .section-title { color: var(--paper); }
+.form-section .section-sub { color: rgba(255,255,255,0.55); }
+.form-card {
+  background: var(--paper); color: var(--ink);
+  border-radius: 12px; max-width: 480px;
+  margin: 0 auto; padding: 36px;
+  box-shadow: 0 28px 72px rgba(0,0,0,0.32);
+}
+@media (max-width: 540px) { .form-card { padding: 22px 16px; } }
+
+/* ===== Birthday globe (form) ===== */
+.bday-ring-wrap {
+  position: relative; width: 230px; height: 230px;
+  margin: 0 auto 26px;
+}
+.bday-svg { width: 100%; height: 100%; overflow: visible; }
+.bday-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.bday-month-lbl {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px; color: #F4C77E;
+  min-height: 22px; font-style: italic;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+}
+.bday-day-lbl {
+  font-family: 'DM Serif Display', serif;
+  font-size: 50px; color: #FFF7EA;
+  line-height: 1; min-height: 56px;
+  font-weight: 400;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.7), 0 0 18px rgba(196,144,63,0.5);
+}
+.bday-hint-lbl {
+  font-size: 10px; color: #EAF1F7;
+  opacity: 0.85; text-align: center;
+  margin-top: 3px; max-width: 130px;
+  text-shadow: 0 1px 5px rgba(0,0,0,0.7);
+}
+
+/* ===== FIELDS ===== */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 13px;
+  font-weight: 600; margin-bottom: 6px;
+  color: var(--ink); opacity: 0.85;
+}
+.field input, .field select {
+  width: 100%; padding: 11px 14px;
+  border: 1.5px solid var(--line); border-radius: 6px;
+  font-family: 'Inter', sans-serif; font-size: 14.5px;
+  background: var(--bg); color: var(--ink);
+  transition: border-color 0.2s;
+}
+.field input:focus, .field select:focus {
+  outline: none; border-color: var(--gold);
+}
+.field select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231A2540' stroke-width='2.2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px; cursor: pointer;
+}
+.field select:disabled { opacity: 0.45; cursor: not-allowed; }
+.field-row { display: flex; gap: 10px; }
+.field-row .field { flex: 1; }
+.field-hint {
+  font-size: 12px; opacity: 0.6; margin-top: 5px;
+  line-height: 1.45;
+}
+/* honeypot: visually and functionally removed for humans, still in DOM for bots */
+.hp-field {
+  position: absolute !important; left: -9999px !important;
+  width: 1px; height: 1px; overflow: hidden;
+  opacity: 0; pointer-events: none;
+}
+.privacy-line {
+  font-size: 12px; opacity: 0.55; margin-top: 14px;
+  line-height: 1.5; text-align: center;
+}
+.submit-btn {
+  width: 100%; background: var(--terra); color: #fff;
+  font-family: 'Inter', sans-serif; font-weight: 700;
+  font-size: 15px; padding: 14px; border: none;
+  border-radius: 6px; cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  margin-top: 6px; letter-spacing: 0.2px;
+}
+.submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.submit-btn:disabled { opacity: 0.55; transform: none; cursor: not-allowed; }
+.form-foot { text-align: center; font-size: 11.5px; opacity: 0.4; margin-top: 14px; }
+.success-msg {
+  text-align: center; padding: 14px 0; display: none;
+}
+.success-icon { font-size: 46px; color: var(--gold); margin-bottom: 12px; }
+.success-msg h4 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px; margin-bottom: 10px;
+}
+.success-msg p { font-size: 14px; opacity: 0.68; }
+
+/* scroll reveal (progressive enhancement) */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+
+footer {
+  text-align: center; padding: 36px 24px;
+  font-size: 12.5px; opacity: 0.38;
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Reusable rotating Earth (defined once, used in hero + form) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <radialGradient id="oceanGrad" cx="40%" cy="34%" r="72%">
+      <stop offset="0%"  stop-color="#2C6890"/>
+      <stop offset="55%" stop-color="#164A6B"/>
+      <stop offset="100%" stop-color="#0A2740"/>
+    </radialGradient>
+    <radialGradient id="shadeGrad" cx="38%" cy="34%" r="66%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="34%"  stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="72%"  stop-color="#041022" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#010610" stop-opacity="0.72"/>
+    </radialGradient>
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#C4903F" stop-opacity="0.30"/>
+      <stop offset="55%"  stop-color="#C4903F" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#C4903F" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="globeClip"><circle cx="150" cy="150" r="110"/></clipPath>
+
+    <!-- equirectangular real Earth (NASA Blue Marble), 440 x 220 -->
+    <g id="worldStrip">
+      <image href="earth.jpg" xlink:href="earth.jpg" x="0" y="0" width="440" height="220" preserveAspectRatio="xMidYMid slice"/>
+
+      <!-- people around the world -->
+      <circle class="ppl p-a" cx="60"  cy="45"  r="2.6" style="animation-delay:0s"/>
+      <circle class="ppl p-b" cx="85"  cy="60"  r="2.6" style="animation-delay:0.5s"/>
+      <circle class="ppl p-c" cx="108" cy="50"  r="2.6" style="animation-delay:1s"/>
+      <circle class="ppl p-d" cx="125" cy="72"  r="2.6" style="animation-delay:1.5s"/>
+      <circle class="ppl p-e" cx="95"  cy="78"  r="2.6" style="animation-delay:2s"/>
+      <circle class="ppl p-f" cx="45"  cy="40"  r="2.6" style="animation-delay:0.3s"/>
+      <circle class="ppl p-g" cx="132" cy="112" r="2.6" style="animation-delay:0.6s"/>
+      <circle class="ppl p-a" cx="146" cy="128" r="2.6" style="animation-delay:1.1s"/>
+      <circle class="ppl p-b" cx="138" cy="150" r="2.6" style="animation-delay:1.6s"/>
+      <circle class="ppl p-c" cx="128" cy="124" r="2.6" style="animation-delay:2.1s"/>
+      <circle class="ppl p-d" cx="170" cy="26"  r="2.6" style="animation-delay:1s"/>
+      <circle class="ppl p-e" cx="222" cy="50"  r="2.6" style="animation-delay:0.2s"/>
+      <circle class="ppl p-f" cx="238" cy="46"  r="2.6" style="animation-delay:0.9s"/>
+      <circle class="ppl p-g" cx="252" cy="52"  r="2.6" style="animation-delay:1.4s"/>
+      <circle class="ppl p-a" cx="228" cy="80"  r="2.6" style="animation-delay:0.4s"/>
+      <circle class="ppl p-b" cx="250" cy="104" r="2.6" style="animation-delay:1s"/>
+      <circle class="ppl p-c" cx="240" cy="130" r="2.6" style="animation-delay:1.7s"/>
+      <circle class="ppl p-d" cx="262" cy="88"  r="2.6" style="animation-delay:2.2s"/>
+      <circle class="ppl p-e" cx="222" cy="96"  r="2.6" style="animation-delay:0.7s"/>
+      <circle class="ppl p-f" cx="300" cy="58"  r="2.6" style="animation-delay:0.3s"/>
+      <circle class="ppl p-g" cx="330" cy="48"  r="2.6" style="animation-delay:1.2s"/>
+      <circle class="ppl p-a" cx="360" cy="50"  r="2.6" style="animation-delay:0.8s"/>
+      <circle class="ppl p-b" cx="392" cy="46"  r="2.6" style="animation-delay:1.5s"/>
+      <circle class="ppl p-c" cx="346" cy="70"  r="2.6" style="animation-delay:2s"/>
+      <circle class="ppl p-d" cx="372" cy="82"  r="2.6" style="animation-delay:0.5s"/>
+      <circle class="ppl p-e" cx="320" cy="86"  r="2.6" style="animation-delay:1s"/>
+      <circle class="ppl p-f" cx="410" cy="58"  r="2.6" style="animation-delay:1.8s"/>
+      <circle class="ppl p-g" cx="376" cy="142" r="2.6" style="animation-delay:0.6s"/>
+      <circle class="ppl p-a" cx="392" cy="146" r="2.6" style="animation-delay:1.3s"/>
+    </g>
+  </defs>
+</svg>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">Happy<span>borns</span></a>
+  <div class="nav-right">
+    <label class="lang-wrap" title="Language">
+      <span class="lang-globe" aria-hidden="true">🌐</span>
+      <select id="lang-switch" aria-label="Choose language"></select>
+    </label>
+    <a href="#join" class="nav-cta" data-i18n="nav_cta">Find My Birthday Twin →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="ring-wrap">
+    <svg class="ring-svg" viewBox="0 0 300 300">
+      <circle class="globe-glow"  cx="150" cy="150" r="142"/>
+      <circle class="orbit-ring"  cx="150" cy="150" r="128"/>
+      <circle class="globe-ocean" cx="150" cy="150" r="110"/>
+      <g clip-path="url(#globeClip)">
+        <g transform="translate(40,40)">
+          <g class="earth-rot">
+            <use href="#worldStrip" x="0"/>
+            <use href="#worldStrip" x="440"/>
+          </g>
+        </g>
+        <circle class="globe-shade" cx="150" cy="150" r="110"/>
+      </g>
+      <circle class="globe-atmo" cx="150" cy="150" r="110"/>
+      <circle class="globe-rim"  cx="150" cy="150" r="110"/>
+    </svg>
+    <div class="ring-center">
+      <span class="ring-label" data-i18n="ring_label">One shared day</span>
+      <span class="ring-sub" data-i18n="ring_sub">every country · every age</span>
+    </div>
+  </div>
+
+  <p class="hero-live" id="hero-live" hidden></p>
+  <span class="tag" data-i18n="hero_tag">✦ Early Access — Free</span>
+  <h1 data-i18n-html="hero_h1">Somewhere out there,<br>someone shares <em>your birthday.</em></h1>
+  <p class="lede" data-i18n-html="hero_lede">Not the same year — the same <strong>day</strong>. A stranger in another country blows out their candles on your date. Happyborns quietly connects you. No algorithm, no swiping — just one shared day.</p>
+  <p class="hero-mission" data-i18n-html="hero_mission">We're not building another social network — we're <em>deleting the distance between people</em>, one birthday at a time.</p>
+  <div class="hero-btns">
+    <a href="#join" class="btn-primary" data-i18n="btn_find">Find My Birthday Twin</a>
+    <a href="#mission" class="btn-ghost" data-i18n="btn_mission">Read our mission ↓</a>
+  </div>
+  <p class="hero-note" data-i18n="hero_note">Free · No app needed · Takes 60 seconds</p>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat">
+      <span class="stat-num">365</span>
+      <div class="stat-label" data-i18n="stat1">Birthday rooms to fill</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">8B+</span>
+      <div class="stat-label" data-i18n="stat2">People on Earth</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">~22M</span>
+      <div class="stat-label" data-i18n="stat3">Share your exact birthday</div>
+    </div>
+    <div class="stat">
+      <span class="stat-num">0</span>
+      <div class="stat-label" data-i18n="stat4">Dollars to join</div>
+    </div>
+  </div>
+</div>
+
+<!-- MANIFESTO -->
+<section class="manifesto" id="mission">
+  <div class="manifesto-inner">
+    <span class="eyebrow" data-i18n="manifesto_eyebrow">Why we're really doing this</span>
+    <h2 data-i18n-html="manifesto_h2">We're deleting the distance<br>between <em>people.</em></h2>
+
+    <p class="manifesto-lead" data-i18n="manifesto_lead">Borders, languages, flags, beliefs, the color of our skin — we let them convince us that strangers are far away. They aren't. The distance was never real.</p>
+
+    <p class="manifesto-body" data-i18n-html="manifesto_b1">Your birthday is the most neutral thing about you. You didn't earn it, choose it, or fight for it. It belongs to no country and no religion. It's <strong>pure chance</strong> — and by pure chance, it's shared by millions of people who look nothing like you and live nowhere near you.</p>
+
+    <p class="manifesto-body" data-i18n-html="manifesto_b2">So we use that one honest coincidence to put a student in Cairo, a nurse in Brazil, and a farmer in Japan in the <strong>same room, as equals</strong> — a CEO in Malaysia, an office worker in Kenya, a refugee in Canada, an entrepreneur in Algeria, a teacher in Mexico, a grandmother in Poland, all sharing a single square on the calendar. Not to sell anything. Just to prove they were never really strangers.</p>
+
+    <div class="manifesto-rooms">
+      <span data-i18n="room_chip1">🎈 A shared day</span>
+      <span data-i18n="room_chip2">💬 A small room</span>
+      <span data-i18n="room_chip3">🤝 Ideas &amp; help</span>
+      <span data-i18n="room_chip4">🌍 Friends on every continent</span>
+    </div>
+
+    <p class="manifesto-body" data-i18n-html="manifesto_b3">Each <strong>Happyborns room</strong> starts as a group chat — but it doesn't have to end there. People who trust each other trade ideas, skills, and small kindnesses across the map. A meetup. A collaboration. A friendship that outlives the coincidence that started it.</p>
+
+    <p class="manifesto-close" data-i18n-html="manifesto_close">One day. One planet.<br>One human family.</p>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="wrap">
+    <span class="section-tag" data-i18n="how_tag">How it works</span>
+    <div class="section-title" data-i18n="how_title">Simple. Human. Real.</div>
+    <p class="section-sub" data-i18n="how_sub">No algorithm decides who you meet. Just the day you were born.</p>
+    <div class="steps">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <h3 data-i18n="how1_h">Enter your birthday</h3>
+        <p data-i18n="how1_p">Day and month only — no year needed. Takes 30 seconds.</p>
+      </div>
+      <div class="step-card reveal" style="transition-delay:0.1s">
+        <div class="step-num">2</div>
+        <h3 data-i18n="how2_h">We check the density</h3>
+        <p data-i18n="how2_p">We wait until enough people share your date to form a real, lively room — not an empty one.</p>
+      </div>
+      <div class="step-card reveal" style="transition-delay:0.2s">
+        <div class="step-num">3</div>
+        <h3 data-i18n="how3_h">Your room opens</h3>
+        <p data-i18n="how3_p">A small group chat (WhatsApp or Telegram) with people who share your birthday — anywhere in the world.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="section" style="background:var(--bg-soft); padding-top:72px; padding-bottom:72px;">
+  <div class="wrap">
+    <span class="section-tag" data-i18n="why_tag">Why Happyborns</span>
+    <div class="section-title" data-i18n="why_title">Not another social network.</div>
+    <p class="section-sub" data-i18n="why_sub">This is one shared coincidence — and everything that can grow from it.</p>
+    <div class="why-grid">
+      <div class="why-card reveal">
+        <div class="why-icon">🌍</div>
+        <div>
+          <h3 data-i18n="why1_h">Truly global</h3>
+          <p data-i18n="why1_p">Your birthday room might include someone from Japan, Brazil, Nigeria, and France — all celebrating on the same day as you.</p>
+        </div>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.08s">
+        <div class="why-icon">🤝</div>
+        <div>
+          <h3 data-i18n="why2_h">No algorithm</h3>
+          <p data-i18n="why2_p">You don't choose who you meet. The calendar does. That's what makes it feel like fate.</p>
+        </div>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.16s">
+        <div class="why-icon">🎂</div>
+        <div>
+          <h3 data-i18n="why3_h">Every age, one date</h3>
+          <p data-i18n="why3_p">Not the same birth year — just the same day. A teenager and a grandmother can share one calendar square, and that's the magic.</p>
+        </div>
+      </div>
+      <div class="why-card reveal" style="transition-delay:0.24s">
+        <div class="why-icon">✨</div>
+        <div>
+          <h3 data-i18n="why4_h">Weekly spark</h3>
+          <p data-i18n="why4_p">Every week, your group gets one question to answer together. Keeps things alive without effort.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HONEST -->
+<section class="section">
+  <div class="wrap">
+    <div class="honest-box reveal">
+      <h3 data-i18n="honest_h">Honest disclaimer</h3>
+      <p data-i18n="honest_p1">Happyborns is an experiment, not a finished product. We want to be upfront:</p>
+      <ul>
+        <li data-i18n-html="honest_li1">These are birthday-<em>date</em> rooms — same day &amp; month, any year. Not age groups.</li>
+        <li data-i18n="honest_li2">There's no app yet — just small group chats to start.</li>
+        <li data-i18n="honest_li3">Your birthday room might take a few weeks to fill up.</li>
+        <li data-i18n="honest_li4">If there isn't enough interest, we'll tell you honestly.</li>
+      </ul>
+      <p data-i18n="honest_p2">Register only if you're genuinely curious. We'd rather have 100 real people than 10,000 ghosts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FORM -->
+<section class="form-section" id="join">
+  <div class="wrap">
+    <div class="section-title" data-i18n="form_title">Join the experiment</div>
+    <p class="section-sub" data-i18n="form_sub">60 seconds. Free forever. No app to download.</p>
+
+    <div class="form-card">
+
+      <!-- Rotating Earth — your birthday over the planet -->
+      <div class="bday-ring-wrap">
+        <svg class="bday-svg" viewBox="0 0 300 300">
+          <circle class="globe-glow"  cx="150" cy="150" r="142"/>
+          <circle class="orbit-ring"  cx="150" cy="150" r="128"/>
+          <circle class="globe-ocean" cx="150" cy="150" r="110"/>
+          <g clip-path="url(#globeClip)">
+            <g transform="translate(40,40)">
+              <g class="earth-rot">
+                <use href="#worldStrip" x="0"/>
+                <use href="#worldStrip" x="440"/>
+                <g id="live-dots-0" class="live-dots" transform="translate(0,0)"></g>
+                <g id="live-dots-1" class="live-dots" transform="translate(440,0)"></g>
+              </g>
+            </g>
+            <circle class="globe-shade" cx="150" cy="150" r="110"/>
+          </g>
+          <circle class="globe-atmo" cx="150" cy="150" r="110"/>
+          <circle class="globe-rim"  cx="150" cy="150" r="110"/>
+        </svg>
+        <div class="bday-center">
+          <div class="bday-month-lbl" id="bday-month">Your day</div>
+          <div class="bday-day-lbl" id="bday-day"></div>
+          <div class="bday-hint-lbl" id="bday-hint" data-i18n="bday_hint_default">Enter month &amp; day — meet your people worldwide</div>
+        </div>
+      </div>
+
+      <div class="room-preview" id="room-preview" hidden></div>
+
+      <form id="reg-form" autocomplete="off">
+        <!-- honeypot: hidden from humans, bots tend to fill it -->
+        <div class="hp-field" aria-hidden="true">
+          <label for="inp-website">Website</label>
+          <input type="text" id="inp-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="inp-name" data-i18n="lbl_name">Your name in the room</label>
+          <input type="text" id="inp-name" maxlength="40" placeholder="Sara" required>
+          <div class="field-hint" data-i18n="hint_name">A first name or nickname your birthday twins will call you. No last name needed.</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="inp-day" data-i18n="lbl_day">Birth Day</label>
+            <input type="number" id="inp-day" min="1" max="31" placeholder="15" required>
+          </div>
+          <div class="field">
+            <label for="inp-month" data-i18n="lbl_month">Birth Month</label>
+            <input type="number" id="inp-month" min="1" max="12" placeholder="3" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="inp-country" data-i18n="lbl_country">Country</label>
+          <select id="inp-country" required>
+            <option value="" disabled selected data-i18n="ph_country">Select your country</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="inp-region" data-i18n="lbl_region">Region / State</label>
+          <select id="inp-region" required disabled>
+            <option value="" disabled selected data-i18n="ph_region">Select country first</option>
+          </select>
+          <input type="text" id="inp-region-text" placeholder="Type your region or state" style="display:none;margin-top:8px;">
+        </div>
+
+        <div class="field">
+          <label for="inp-lang" data-i18n="lbl_lang">Preferred language</label>
+          <select id="inp-lang" required></select>
+        </div>
+
+        <div class="field">
+          <label for="inp-contact-type" data-i18n="lbl_contact_type">Contact method</label>
+          <select id="inp-contact-type" required>
+            <option value="" disabled selected data-i18n="ph_contact_type">Choose contact method</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="email" data-i18n="opt_email">Email</option>
+            <option value="phone" data-i18n="opt_phone">Phone</option>
+            <option value="telegram">Telegram</option>
+            <option value="other" data-i18n="opt_other">Other</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="inp-contact-val" data-i18n="lbl_contact_val">Contact value</label>
+          <input type="text" id="inp-contact-val" placeholder="Choose contact method first" required>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn" data-i18n="submit_btn">Find My Birthday Twin →</button>
+        <div class="form-foot" data-i18n="form_foot">Your info is used only to connect you with your birthday group. Never shared or sold.</div>
+        <div class="privacy-line" data-i18n="privacy_line">We store only what you enter here, to build your birthday room. No tracking, no ads. Want your data removed? Reply to any message from us and it's gone.</div>
+      </form>
+
+      <div class="success-msg" id="success-msg">
+        <div class="success-icon">✦</div>
+        <h4 data-i18n="success_title">You're in!</h4>
+        <p class="success-room" id="success-room" hidden></p>
+        <p data-i18n="success_body">We'll reach out within two weeks with an honest update — whether your room is ready or not.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>Happyborns © 2025 · A human experiment · happyborns.netlify.app</footer>
+
+<script>
+// ============================================================
+// 1. Registration (via secure Netlify Function — no token here)
+// ============================================================
+async function saveRecord(record) {
+  const res = await fetch('/.netlify/functions/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record)
+  });
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(res.status + ': ' + t);
+  }
+  return res.json();
+}
+
+// Where did this visitor come from? (UTM tags or referrer) — for launch-channel analytics.
+function captureSource() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const utm = p.get('utm_source') || p.get('ref') || p.get('source');
+    if (utm) return String(utm).slice(0, 60);
+    const r = document.referrer;
+    if (r) { try { return new URL(r).hostname.slice(0, 60); } catch(e) { return 'ref'; } }
+    return 'direct';
+  } catch(e) { return 'direct'; }
+}
+
+// ============================================================
+// 1b. Live stats (secure aggregate read — anonymous counts only)
+// ============================================================
+async function fetchStats(day, month, bust) {
+  const params = [];
+  if (day && month) {
+    params.push('day=' + encodeURIComponent(day));
+    params.push('month=' + encodeURIComponent(month));
+  }
+  if (bust) params.push('_=' + Date.now());
+  const url = '/.netlify/functions/stats' + (params.length ? '?' + params.join('&') : '');
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('stats ' + res.status);
+  return res.json();
+}
+function plural(n, one, many) { return n === 1 ? one : many; }
+
+// Global live counter in the hero (localized + re-rendered on language change)
+let hbStats = null;
+function renderHeroLive() {
+  if (!hbStats || !hbStats.total) return;
+  const el = document.getElementById('hero-live');
+  if (!el) return;
+  const pplTpl = hbStats.total === 1 ? T('live_ppl_1') : T('live_ppl_n');
+  const ctrTpl = hbStats.countries === 1 ? T('live_ctr_1') : T('live_ctr_n');
+  const ppl = pplTpl.replace('{n}', hbStats.total);
+  const ctr = ctrTpl.replace('{n}', hbStats.countries);
+  el.innerHTML = T('live_counter')
+    .replace('{ppl}', '<b>' + ppl + '</b>')
+    .replace('{ctr}', '<b>' + ctr + '</b>');
+  el.hidden = false;
+}
+(async function loadGlobalStats(){
+  try {
+    const s = await fetchStats();
+    if (!s || !s.total) return;
+    hbStats = s;
+    renderHeroLive();
+    renderLiveDots();
+  } catch(e) { /* counter is optional — stay silent */ }
+})();
+document.addEventListener('hb:lang', renderHeroLive);
+
+// ---- Live map dots on the form globe ----
+const SVGNS = 'http://www.w3.org/2000/svg';
+let myCountryName = null; // set after registration to highlight the user's country
+
+function coordsFor(name) {
+  if (!name || typeof COUNTRY_COORDS === 'undefined') return null;
+  if (COUNTRY_COORDS[name]) return COUNTRY_COORDS[name];
+  const low = String(name).toLowerCase();
+  for (const k in COUNTRY_COORDS) {
+    if (k.toLowerCase() === low) return COUNTRY_COORDS[k];
+  }
+  return null;
+}
+
+function renderLiveDots() {
+  const layers = [document.getElementById('live-dots-0'), document.getElementById('live-dots-1')];
+  if (!layers[0] || typeof coordToStrip === 'undefined') return;
+  const list = (hbStats && hbStats.byCountry) ? hbStats.byCountry : [];
+
+  layers.forEach(layer => {
+    while (layer.firstChild) layer.removeChild(layer.firstChild);
+    list.forEach(item => {
+      const c = coordsFor(item.name);
+      if (!c) return;
+      const p = coordToStrip(c[0], c[1]);
+      const mine = myCountryName &&
+        String(item.name).toLowerCase() === String(myCountryName).toLowerCase();
+      const dot = document.createElementNS(SVGNS, 'circle');
+      dot.setAttribute('cx', p.x.toFixed(1));
+      dot.setAttribute('cy', p.y.toFixed(1));
+      dot.setAttribute('r', mine ? '5.5' : '3');
+      dot.setAttribute('class', mine ? 'ld ld-mine' : 'ld');
+      // stagger the pulse a little by country name length
+      dot.style.animationDelay = ((item.name.length % 10) * 0.18) + 's';
+      layer.appendChild(dot);
+    });
+  });
+}
+
+// Highlight the new member's country (called after successful registration)
+function highlightMyCountry(name) {
+  myCountryName = name;
+  if (!hbStats) hbStats = { byCountry: [] };
+  if (!hbStats.byCountry) hbStats.byCountry = [];
+  const found = hbStats.byCountry.find(x =>
+    String(x.name).toLowerCase() === String(name).toLowerCase());
+  if (!found && coordsFor(name)) hbStats.byCountry.push({ name, n: 1 });
+  renderLiveDots();
+}
+
+// ============================================================
+// 2. Birthday Ring (Interactive)
+// ============================================================
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+const DAYS_PER = [31,29,31,30,31,30,31,31,30,31,30,31];
+
+// Localized helpers (fall back to English via hbT)
+function T(key){ return (window.hbT ? window.hbT(key) : null) || key; }
+function fmt(str, map){ return String(str).replace(/\{(\w+)\}/g, (_,k)=> (k in map ? map[k] : '')); }
+function hbMonthName(m){
+  try {
+    const s = window.hbT && window.hbT('months');
+    if (s) { const arr = s.split(','); if (arr[m-1]) return arr[m-1].trim(); }
+  } catch(e){}
+  return MONTHS[m-1];
+}
+function hbLabel(m, d){ return hbMonthName(m) + ' ' + d; }
+
+const monthEl = document.getElementById('bday-month');
+const dayEl   = document.getElementById('bday-day');
+const hintEl  = document.getElementById('bday-hint');
+
+function updateRing() {
+  const m = parseInt(document.getElementById('inp-month').value,10);
+  const d = parseInt(document.getElementById('inp-day').value,10);
+  const vm = (m>=1&&m<=12)?m:null;
+  const maxD = vm?DAYS_PER[vm-1]:31;
+  const vd = (d>=1&&d<=maxD)?d:null;
+
+  monthEl.textContent = vm ? hbMonthName(vm) : T('bday_month_ph');
+  dayEl.textContent   = vd ? vd : '';
+
+  if (vm&&vd) {
+    hintEl.textContent = fmt(T('bday_hint_active'), { date: hbLabel(vm, vd) });
+  } else if (vm) {
+    hintEl.textContent = T('bday_hint_day');
+  } else {
+    hintEl.textContent = T('bday_hint_default');
+  }
+}
+document.getElementById('inp-month').addEventListener('input',updateRing);
+document.getElementById('inp-day').addEventListener('input',updateRing);
+updateRing();
+document.addEventListener('hb:lang', updateRing);
+
+// ---- Live room preview: how many already share this exact date ----
+const roomPreviewEl = document.getElementById('room-preview');
+let lastPreviewKey = '';
+let previewTimer = null;
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, ch => (
+    { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]
+  ));
+}
+function buildMemberChips(members) {
+  if (!members || !members.length) return '';
+  const flag = (typeof flagFor === 'function') ? flagFor : (()=> '');
+  const shown = members.slice(0, 6).map(m => {
+    const nm = (m.name && m.name.trim()) ? escapeHtml(m.name.trim()) : '';
+    const fl = flag(m.country);
+    const label = (fl ? fl + ' ' : '') + (nm || (fl ? '' : '•'));
+    return '<span class="rp-chip">' + label.trim() + '</span>';
+  }).join('');
+  const more = members.length > 6 ? '<span class="rp-chip rp-more">+' + (members.length - 6) + '</span>' : '';
+  return '<div class="rp-chips">' + shown + more + '</div>';
+}
+function renderRoomPreview(month, day, data) {
+  const label = hbLabel(month, day);
+  const n = data.match ? data.match.count : 0;
+  const c = data.match ? data.match.countries : 0;
+  const members = data.match ? data.match.members : null;
+  if (n > 0) {
+    const ppl = '<b>' + n + '</b> ' + (n === 1 ? T('rp_person_1') : T('rp_person_n'));
+    const from = c > 1 ? fmt(T('rp_from'), { n: '<b>' + c + '</b>' }) : '';
+    roomPreviewEl.className = 'room-preview warm';
+    roomPreviewEl.innerHTML =
+      '<div class="rp-big">' + fmt(T('rp_share'), { ppl: ppl, from: from, date: label }) + '</div>' +
+      buildMemberChips(members) +
+      '<div class="rp-sub">' + T('rp_grow') + '</div>';
+  } else {
+    roomPreviewEl.className = 'room-preview';
+    roomPreviewEl.innerHTML =
+      '<div class="rp-big">' + fmt(T('rp_first'), { date: label }) + '</div>' +
+      '<div class="rp-sub">' + T('rp_first_sub') + '</div>';
+  }
+  roomPreviewEl.hidden = false;
+}
+
+function schedulePreview() {
+  const m = parseInt(document.getElementById('inp-month').value,10);
+  const d = parseInt(document.getElementById('inp-day').value,10);
+  const vm = (m>=1&&m<=12)?m:null;
+  const maxD = vm?DAYS_PER[vm-1]:31;
+  const vd = (d>=1&&d<=maxD)?d:null;
+  if (!(vm&&vd)) { roomPreviewEl.hidden = true; lastPreviewKey=''; return; }
+  const key = vm + '-' + vd;
+  if (key === lastPreviewKey) return;
+  lastPreviewKey = key;
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(async ()=>{
+    try {
+      const data = await fetchStats(vd, vm, true);
+      if (lastPreviewKey === key) renderRoomPreview(vm, vd, data);
+    } catch(e) { /* preview is optional */ }
+  }, 450);
+}
+document.getElementById('inp-month').addEventListener('input',schedulePreview);
+document.getElementById('inp-day').addEventListener('input',schedulePreview);
+
+// ============================================================
+// 3. Country / Region dropdowns
+// ============================================================
+const selC = document.getElementById('inp-country');
+const selR = document.getElementById('inp-region');
+const txtR = document.getElementById('inp-region-text');
+
+// Localized country label via Intl.DisplayNames, falling back to the English name.
+function countryLabel(name, lang) {
+  const iso = (typeof COUNTRY_ISO !== 'undefined') ? COUNTRY_ISO[name] : null;
+  if (iso) {
+    try {
+      const dn = new Intl.DisplayNames([lang], { type: 'region' });
+      const t = dn.of(iso);
+      if (t) return t;
+    } catch (e) { /* unsupported lang -> fall through */ }
+  }
+  // "Other" has no ISO code — translate via i18n key when available.
+  if (name === 'Other' && typeof window.hbT === 'function') {
+    const t = window.hbT('opt_other'); if (t) return t;
+  }
+  return name;
+}
+
+// (Re)build the country dropdown, translated and sorted for the current language.
+// The option VALUE stays the English name (key for regions, calling codes, Airtable);
+// only the visible TEXT is localized.
+function buildCountryOptions() {
+  const lang = window.hbLang || 'en';
+  const prev = selC.value;
+  const items = COUNTRY_LIST
+    .filter(n => n !== 'Other')
+    .map(n => ({ value: n, label: countryLabel(n, lang) }))
+    .sort((a, b) => a.label.localeCompare(b.label, lang));
+
+  // placeholder first
+  selC.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = ''; ph.disabled = true; ph.selected = true;
+  ph.textContent = (typeof window.hbT === 'function' && window.hbT('ph_country')) || 'Select your country';
+  selC.appendChild(ph);
+
+  items.forEach(it => {
+    const o = document.createElement('option');
+    o.value = it.value; o.textContent = it.label; selC.appendChild(o);
+  });
+  // "Other" always last
+  if (COUNTRY_LIST.includes('Other')) {
+    const o = document.createElement('option');
+    o.value = 'Other'; o.textContent = countryLabel('Other', lang); selC.appendChild(o);
+  }
+  // preserve the user's selection across a language switch
+  if (prev) selC.value = prev;
+}
+
+buildCountryOptions();
+// Rebuild (re-translate + re-sort) whenever the language changes.
+document.addEventListener('hb:lang', buildCountryOptions);
+
+selC.addEventListener('change',function(){
+  const regions=COUNTRIES_DATA[this.value];
+  selR.innerHTML=''; txtR.value='';
+  if (!regions||regions.length===0||this.value==='Other') {
+    selR.style.display='none'; selR.required=false;
+    txtR.style.display=''; txtR.required=true;
+    txtR.placeholder='Type your region or state';
+  } else {
+    selR.style.display=''; selR.disabled=false; selR.required=true;
+    txtR.style.display='none'; txtR.required=false;
+    const ph=document.createElement('option');
+    ph.value=''; ph.disabled=true; ph.selected=true;
+    ph.textContent='Select region or state'; selR.appendChild(ph);
+    regions.forEach(r=>{
+      const o=document.createElement('option');
+      o.value=r; o.textContent=r; selR.appendChild(o);
+    });
+    const oth=document.createElement('option');
+    oth.value='Other'; oth.textContent='Other'; selR.appendChild(oth);
+  }
+  fillCode();
+});
+
+// ============================================================
+// 4. Contact method + auto country code
+// ============================================================
+const selT = document.getElementById('inp-contact-type');
+const inpV = document.getElementById('inp-contact-val');
+const PH = {
+  whatsapp:'WhatsApp number with country code',
+  email:'your@email.com',
+  phone:'Phone number with country code',
+  telegram:'@username',
+  other:'Describe your contact method'
+};
+
+function fillCode() {
+  if (selT.value!=='whatsapp'&&selT.value!=='phone') return;
+  const code=COUNTRY_CALLING_CODES[selC.value];
+  if (!code) return;
+  const cur=inpV.value.trim();
+  if (cur===''||/^\+\d{1,4}\s?$/.test(cur)) inpV.value=code+' ';
+}
+
+selT.addEventListener('change',function(){
+  inpV.placeholder = PH[this.value]||'Enter your contact info';
+  inpV.type = this.value==='email'?'email':'text';
+  inpV.value='';
+  setTimeout(fillCode,80);
+});
+
+// ============================================================
+// 5. Form submit
+// ============================================================
+document.getElementById('reg-form').addEventListener('submit',async function(e){
+  e.preventDefault();
+  const btn=document.getElementById('submit-btn');
+  // Honeypot: real humans never see/fill this. If filled, silently drop (pretend success).
+  const hp = document.getElementById('inp-website');
+  if (hp && hp.value.trim() !== '') {
+    document.getElementById('reg-form').style.display='none';
+    document.getElementById('success-msg').style.display='block';
+    return;
+  }
+  btn.disabled=true; btn.textContent=T('btn_saving');
+  const record={
+    DisplayName: (document.getElementById('inp-name')||{}).value || '',
+    Day:   document.getElementById('inp-day').value,
+    Month: document.getElementById('inp-month').value,
+    Country:      selC.value,
+    Region:       txtR.style.display!=='none'?txtR.value:selR.value,
+    language:     (document.getElementById('inp-lang')||{}).value || (window.hbLang||'en'),
+    ContactType:  selT.value,
+    ContactValue: inpV.value,
+    Source:       (window.hbSource || 'direct'),
+    SubmittedAt:  new Date().toISOString()
+  };
+  try {
+    await saveRecord(record);
+    document.getElementById('reg-form').style.display='none';
+    document.getElementById('success-msg').style.display='block';
+    // Light up the new member's country on the globe.
+    highlightMyCountry(record.Country);
+    // Show the freshly-updated room size (best-effort)
+    try {
+      const d = parseInt(record.Day,10), m = parseInt(record.Month,10);
+      const s = await fetchStats(d, m, true);
+      if (s && typeof s.total !== 'undefined') { hbStats = s; renderHeroLive(); }
+      highlightMyCountry(record.Country);
+      const n = s.match ? s.match.count : 0;
+      const c = s.match ? s.match.countries : 0;
+      const roomEl = document.getElementById('success-room');
+      const nm = (record.DisplayName || '').trim();
+      if (n >= 1 && m>=1 && m<=12) {
+        const label = hbLabel(m, d);
+        const who = nm ? fmt(T('succ_hi'), { name: escapeHtml(nm) }) : '';
+        if (n === 1) {
+          roomEl.innerHTML = who + fmt(T('succ_first'), { date: label });
+        } else {
+          const from = c > 1 ? fmt(T('succ_from'), { n: c }) : '';
+          roomEl.innerHTML = who + fmt(T('succ_more'), { n: n, date: label, from: from });
+        }
+        roomEl.hidden = false;
+      }
+    } catch(e) { /* optional */ }
+  } catch(err) {
+    console.error('Airtable error:',err);
+    btn.disabled=false; btn.textContent=T('btn_find');
+    alert(T('form_error'));
+  }
+});
+
+// ============================================================
+// 6. Scroll reveal
+// ============================================================
+(function(){
+  const els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || !els.length) {
+    els.forEach(el=>el.classList.add('in')); return;
+  }
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(el=>io.observe(el));
+})();
+
+</script>
+</body>
+</html>

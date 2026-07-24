@@ -1,0 +1,10 @@
+# Internal / local-only files — never publish
+PROMO-KIT.md
+Open-Happyborns.bat
+og-image.html
+
+# OS / editor junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
