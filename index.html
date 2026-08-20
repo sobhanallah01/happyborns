@@ -1438,6 +1438,7 @@ document.getElementById('reg-form').addEventListener('submit',async function(e){
   const hp = document.getElementById('inp-website');
   if (hp && hp.value.trim() !== '') {
     document.getElementById('reg-form').style.display='none';
+    roomPreviewEl.hidden = true;
     document.getElementById('success-msg').style.display='block';
     return;
   }
@@ -1457,6 +1458,7 @@ document.getElementById('reg-form').addEventListener('submit',async function(e){
   try {
     await saveRecord(record);
     document.getElementById('reg-form').style.display='none';
+    roomPreviewEl.hidden = true;
     document.getElementById('success-msg').style.display='block';
     // Light up the new member's country on the globe.
     highlightMyCountry(record.Country);
