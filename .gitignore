@@ -1,5 +1,6 @@
 # Internal / local-only files — never publish
 PROMO-KIT.md
+LAUNCH-KIT.md
 Open-Happyborns.bat
 og-image.html
 
@@ -8,3 +9,4 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 *.log
+.vscode/

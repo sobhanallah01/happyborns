@@ -346,6 +346,38 @@ h1 em { font-style: italic; color: var(--terra); }
   margin-bottom: 8px !important;
 }
 
+/* ===== HERO PEEK — the magic moment (type your day, see your people) ===== */
+.peek {
+  width: 100%; max-width: 440px;
+  margin: 4px auto 30px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.peek-prompt {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  opacity: 0.85; margin-bottom: 12px; text-align: center;
+}
+.peek-inputs {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--paper); border: 1.5px solid var(--gold);
+  border-radius: 12px; padding: 8px 16px;
+  box-shadow: 0 4px 18px rgba(196,144,63,0.16);
+}
+.peek-inputs input {
+  width: 62px; text-align: center;
+  font-family: 'DM Serif Display', serif; font-size: 26px;
+  color: var(--ink); border: none; background: transparent;
+  outline: none; -moz-appearance: textfield; padding: 2px 0;
+}
+.peek-inputs input::-webkit-outer-spin-button,
+.peek-inputs input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.peek-inputs input::placeholder { color: var(--ink); opacity: 0.26; }
+.peek-sep {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px; color: var(--gold); opacity: 0.7;
+}
+.peek .peek-preview { width: 100%; margin: 16px 0 0; }
+.peek-join { margin-top: 16px; animation: roomPop 0.4s cubic-bezier(0.22,1,0.36,1); }
+
 /* ===== STATS STRIP ===== */
 .stats {
   background: var(--ink); color: var(--paper);
@@ -730,6 +762,18 @@ footer {
   <span class="tag" data-i18n="hero_tag">✦ Early Access — Free</span>
   <h1 data-i18n-html="hero_h1">Somewhere out there,<br>someone shares <em>your birthday.</em></h1>
   <p class="lede" data-i18n-html="hero_lede">Not the same year — the same <strong>day</strong>. A stranger in another country blows out their candles on your date. Happyborns quietly connects you. No algorithm, no swiping — just one shared day.</p>
+
+  <!-- MAGIC MOMENT: peek at your day instantly, before any signup -->
+  <div class="peek" id="peek">
+    <p class="peek-prompt" data-i18n="peek_prompt">Type your birthday 👇 see who’s already there</p>
+    <div class="peek-inputs">
+      <input type="number" id="peek-month" min="1" max="12" inputmode="numeric" placeholder="MM" aria-label="Birth month">
+      <span class="peek-sep">/</span>
+      <input type="number" id="peek-day" min="1" max="31" inputmode="numeric" placeholder="DD" aria-label="Birth day">
+    </div>
+    <div class="peek-preview room-preview" id="peek-preview" hidden></div>
+    <a href="#join" class="peek-join btn-primary" id="peek-join" data-i18n="peek_join" hidden>Join them →</a>
+  </div>
   <p class="hero-mission" data-i18n-html="hero_mission">We're not building another social network — we're <em>deleting the distance between people</em>, one birthday at a time.</p>
   <div class="hero-btns">
     <a href="#join" class="btn-primary" data-i18n="btn_find">Find My Birthday Twin</a>
@@ -936,7 +980,7 @@ footer {
 
         <div class="field">
           <label for="inp-region" data-i18n="lbl_region">Region / State</label>
-          <select id="inp-region" required disabled>
+          <select id="inp-region" disabled>
             <option value="" disabled selected data-i18n="ph_region">Select country first</option>
           </select>
           <input type="text" id="inp-region-text" placeholder="Type your region or state" style="display:none;margin-top:8px;">
@@ -950,8 +994,8 @@ footer {
         <div class="field">
           <label for="inp-contact-type" data-i18n="lbl_contact_type">Contact method</label>
           <select id="inp-contact-type" required>
-            <option value="" disabled selected data-i18n="ph_contact_type">Choose contact method</option>
-            <option value="whatsapp">WhatsApp</option>
+            <option value="" disabled data-i18n="ph_contact_type">Choose contact method</option>
+            <option value="whatsapp" selected>WhatsApp</option>
             <option value="email" data-i18n="opt_email">Email</option>
             <option value="phone" data-i18n="opt_phone">Phone</option>
             <option value="telegram">Telegram</option>
@@ -1171,7 +1215,9 @@ function buildMemberChips(members) {
   const more = members.length > 6 ? '<span class="rp-chip rp-more">+' + (members.length - 6) + '</span>' : '';
   return '<div class="rp-chips">' + shown + more + '</div>';
 }
-function renderRoomPreview(month, day, data) {
+// Shared builder — returns {warm, html} so the hero peek and the in-form
+// preview render from the exact same (already-translated) copy.
+function roomPreviewHTML(month, day, data) {
   const label = hbLabel(month, day);
   const n = data.match ? data.match.count : 0;
   const c = data.match ? data.match.countries : 0;
@@ -1179,17 +1225,19 @@ function renderRoomPreview(month, day, data) {
   if (n > 0) {
     const ppl = '<b>' + n + '</b> ' + (n === 1 ? T('rp_person_1') : T('rp_person_n'));
     const from = c > 1 ? fmt(T('rp_from'), { n: '<b>' + c + '</b>' }) : '';
-    roomPreviewEl.className = 'room-preview warm';
-    roomPreviewEl.innerHTML =
+    return { warm: true, html:
       '<div class="rp-big">' + fmt(T('rp_share'), { ppl: ppl, from: from, date: label }) + '</div>' +
       buildMemberChips(members) +
-      '<div class="rp-sub">' + T('rp_grow') + '</div>';
-  } else {
-    roomPreviewEl.className = 'room-preview';
-    roomPreviewEl.innerHTML =
-      '<div class="rp-big">' + fmt(T('rp_first'), { date: label }) + '</div>' +
-      '<div class="rp-sub">' + T('rp_first_sub') + '</div>';
+      '<div class="rp-sub">' + T('rp_grow') + '</div>' };
   }
+  return { warm: false, html:
+    '<div class="rp-big">' + fmt(T('rp_first'), { date: label }) + '</div>' +
+    '<div class="rp-sub">' + T('rp_first_sub') + '</div>' };
+}
+function renderRoomPreview(month, day, data) {
+  const r = roomPreviewHTML(month, day, data);
+  roomPreviewEl.className = 'room-preview' + (r.warm ? ' warm' : '');
+  roomPreviewEl.innerHTML = r.html;
   roomPreviewEl.hidden = false;
 }
 
@@ -1213,6 +1261,60 @@ function schedulePreview() {
 }
 document.getElementById('inp-month').addEventListener('input',schedulePreview);
 document.getElementById('inp-day').addEventListener('input',schedulePreview);
+
+// ---- Hero "peek" widget: deliver the payoff instantly, before any signup ----
+(function(){
+  const peekMonthEl   = document.getElementById('peek-month');
+  const peekDayEl     = document.getElementById('peek-day');
+  const peekPreviewEl = document.getElementById('peek-preview');
+  const peekJoinEl    = document.getElementById('peek-join');
+  if (!peekMonthEl || !peekDayEl) return;
+  let peekKey = '', peekTimer = null, peekValid = null;
+
+  function renderPeek(vm, vd, data){
+    const r = roomPreviewHTML(vm, vd, data);
+    peekPreviewEl.className = 'peek-preview room-preview' + (r.warm ? ' warm' : '');
+    peekPreviewEl.innerHTML = r.html;
+    peekPreviewEl.hidden = false;
+    peekJoinEl.hidden = false;
+  }
+  function schedulePeek(){
+    const m = parseInt(peekMonthEl.value,10);
+    const d = parseInt(peekDayEl.value,10);
+    const vm = (m>=1&&m<=12)?m:null;
+    const maxD = vm?DAYS_PER[vm-1]:31;
+    const vd = (d>=1&&d<=maxD)?d:null;
+    if (!(vm&&vd)) { peekPreviewEl.hidden=true; peekJoinEl.hidden=true; peekKey=''; peekValid=null; return; }
+    const key = vm + '-' + vd;
+    if (key === peekKey) return;
+    peekKey = key; peekValid = { m: vm, d: vd };
+    clearTimeout(peekTimer);
+    peekTimer = setTimeout(async ()=>{
+      try {
+        const data = await fetchStats(vd, vm, true);
+        if (peekKey === key) renderPeek(vm, vd, data);
+      } catch(e) { /* preview is optional */ }
+    }, 450);
+  }
+  peekMonthEl.addEventListener('input', schedulePeek);
+  peekDayEl.addEventListener('input', schedulePeek);
+  // re-translate the shown preview when the language changes
+  document.addEventListener('hb:lang', ()=>{ if (peekValid){ peekKey=''; schedulePeek(); } });
+
+  // CTA — carry the peeked date into the form, then let #join scroll us there
+  peekJoinEl.addEventListener('click', function(){
+    if (!peekValid) return;
+    const dayInput = document.getElementById('inp-day');
+    const monthInput = document.getElementById('inp-month');
+    if (dayInput && monthInput) {
+      dayInput.value = peekValid.d;
+      monthInput.value = peekValid.m;
+      dayInput.dispatchEvent(new Event('input', { bubbles: true }));
+      monthInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    setTimeout(()=>{ const nm=document.getElementById('inp-name'); if(nm) nm.focus({preventScroll:true}); }, 600);
+  });
+})();
 
 // ============================================================
 // 3. Country / Region dropdowns
@@ -1278,10 +1380,10 @@ selC.addEventListener('change',function(){
   selR.innerHTML=''; txtR.value='';
   if (!regions||regions.length===0||this.value==='Other') {
     selR.style.display='none'; selR.required=false;
-    txtR.style.display=''; txtR.required=true;
-    txtR.placeholder='Type your region or state';
+    txtR.style.display=''; txtR.required=false;
+    txtR.placeholder='Type your region or state (optional)';
   } else {
-    selR.style.display=''; selR.disabled=false; selR.required=true;
+    selR.style.display=''; selR.disabled=false; selR.required=false;
     txtR.style.display='none'; txtR.required=false;
     const ph=document.createElement('option');
     ph.value=''; ph.disabled=true; ph.selected=true;
@@ -1323,6 +1425,8 @@ selT.addEventListener('change',function(){
   inpV.value='';
   setTimeout(fillCode,80);
 });
+// Default contact method is WhatsApp — sync its placeholder/type on load.
+selT.dispatchEvent(new Event('change'));
 
 // ============================================================
 // 5. Form submit
