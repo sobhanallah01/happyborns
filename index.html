@@ -1427,6 +1427,8 @@ selT.addEventListener('change',function(){
 });
 // Default contact method is WhatsApp — sync its placeholder/type on load.
 selT.dispatchEvent(new Event('change'));
+// Clear the "add a contact" custom error as soon as the visitor types.
+inpV.addEventListener('input', function(){ inpV.setCustomValidity(''); });
 
 // ============================================================
 // 5. Form submit
@@ -1442,6 +1444,19 @@ document.getElementById('reg-form').addEventListener('submit',async function(e){
     document.getElementById('success-msg').style.display='block';
     return;
   }
+  // Contact is required for real reachability. The auto-filled country code
+  // otherwise satisfies the native "required" check, so guard here: reject an
+  // empty value, or a phone/WhatsApp value that's only a dialling code.
+  const cRaw = inpV.value.trim();
+  const cDigits = (cRaw.match(/\d/g) || []).length;
+  const cIsPhone = (selT.value === 'whatsapp' || selT.value === 'phone');
+  if (cRaw === '' || (cIsPhone && cDigits < 6)) {
+    inpV.setCustomValidity(T('contact_required'));
+    inpV.reportValidity();
+    inpV.focus();
+    return;
+  }
+  inpV.setCustomValidity('');
   btn.disabled=true; btn.textContent=T('btn_saving');
   const record={
     DisplayName: (document.getElementById('inp-name')||{}).value || '',
