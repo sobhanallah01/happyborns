@@ -1456,30 +1456,39 @@ document.getElementById('reg-form').addEventListener('submit',async function(e){
     SubmittedAt:  new Date().toISOString()
   };
   try {
+    // Room size BEFORE this person joins. stats.js caches its table scan
+    // server-side for ~60s, so a POST-save re-fetch can be stale and wrongly
+    // report "you're #1" when the room already had people. Capture the count
+    // pre-save (never includes the new record); the new size is beforeCount+1.
+    let beforeCount = 0, beforeCountries = 0;
+    try {
+      const pre = await fetchStats(record.Day, record.Month, true);
+      if (pre && typeof pre.total !== 'undefined') { hbStats = pre; }
+      if (pre && pre.match) { beforeCount = pre.match.count || 0; beforeCountries = pre.match.countries || 0; }
+    } catch(e) { /* stats optional */ }
+
     await saveRecord(record);
     document.getElementById('reg-form').style.display='none';
     roomPreviewEl.hidden = true;
     document.getElementById('success-msg').style.display='block';
-    // Light up the new member's country on the globe.
-    highlightMyCountry(record.Country);
-    // Show the freshly-updated room size (best-effort)
+
+    // Best-effort niceties — wrapped so a post-save hiccup can't trigger the
+    // outer error path (the record is already saved at this point).
     try {
-      const d = parseInt(record.Day,10), m = parseInt(record.Month,10);
-      const s = await fetchStats(d, m, true);
-      if (s && typeof s.total !== 'undefined') { hbStats = s; renderHeroLive(); }
       highlightMyCountry(record.Country);
-      const n = s.match ? s.match.count : 0;
-      const c = s.match ? s.match.countries : 0;
+      renderHeroLive();
+      const d = parseInt(record.Day,10), m = parseInt(record.Month,10);
       const roomEl = document.getElementById('success-room');
       const nm = (record.DisplayName || '').trim();
-      if (n >= 1 && m>=1 && m<=12) {
+      if (m>=1 && m<=12) {
+        const total = beforeCount + 1;
         const label = hbLabel(m, d);
         const who = nm ? fmt(T('succ_hi'), { name: escapeHtml(nm) }) : '';
-        if (n === 1) {
+        if (total === 1) {
           roomEl.innerHTML = who + fmt(T('succ_first'), { date: label });
         } else {
-          const from = c > 1 ? fmt(T('succ_from'), { n: c }) : '';
-          roomEl.innerHTML = who + fmt(T('succ_more'), { n: n, date: label, from: from });
+          const from = beforeCountries > 1 ? fmt(T('succ_from'), { n: beforeCountries }) : '';
+          roomEl.innerHTML = who + fmt(T('succ_more'), { n: total, date: label, from: from });
         }
         roomEl.hidden = false;
       }
